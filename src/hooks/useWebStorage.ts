@@ -185,6 +185,14 @@ export const useWebStorage = () => {
         }
       });
       
+      // Metadata ekle
+      exportData._metadata = {
+        exportDate: new Date().toISOString(),
+        version: '1.0.0-web',
+        platform: 'web',
+        userAgent: navigator.userAgent
+      };
+      
       // JSON dosyası olarak indir
       const dataStr = JSON.stringify(exportData, null, 2);
       const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -192,7 +200,15 @@ export const useWebStorage = () => {
       const link = document.createElement('a');
       link.href = URL.createObjectURL(dataBlob);
       link.download = `personel_destek_yedek_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
       link.click();
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+      }, 100);
       
       console.log('📦 [WEB] Veri dışa aktarımı tamamlandı');
       return true;
