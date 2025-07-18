@@ -185,12 +185,21 @@ export const useWebStorage = () => {
         }
       });
       
+      // Veri kontrolü - boş export'u engelle
+      const dataKeys = Object.keys(exportData).filter(key => key !== '_metadata');
+      if (dataKeys.length === 0) {
+        console.warn('⚠️ [WEB] Export edilecek veri bulunamadı');
+        alert('⚠️ Export edilecek veri bulunamadı.\n\nÖnce bazı modüllere veri yükleyin.');
+        return false;
+      }
+
       // Metadata ekle
       exportData._metadata = {
         exportDate: new Date().toISOString(),
         version: '1.0.0-web',
         platform: 'web',
-        userAgent: navigator.userAgent
+        userAgent: navigator.userAgent,
+        totalModules: dataKeys.length
       };
       
       // JSON dosyası olarak indir
@@ -210,10 +219,11 @@ export const useWebStorage = () => {
         URL.revokeObjectURL(link.href);
       }, 100);
       
-      console.log('📦 [WEB] Veri dışa aktarımı tamamlandı');
+      console.log(`📦 [WEB] Veri dışa aktarımı tamamlandı - ${dataKeys.length} modül`);
       return true;
     } catch (error) {
       console.error('❌ [WEB] Dışa aktarım hatası:', error);
+      alert('❌ Dışa aktarım sırasında hata oluştu:\n' + error.message);
       return false;
     }
   }, []);
@@ -227,10 +237,21 @@ export const useWebStorage = () => {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.json';
+        input.style.display = 'none';
+        document.body.appendChild(input);
         
         input.onchange = (e) => {
           const file = (e.target as HTMLInputElement).files?.[0];
           if (!file) {
+            document.body.removeChild(input);
+            resolve(false);
+            return;
+          }
+
+          // Dosya boyutu kontrolü
+          if (file.size > 10 * 1024 * 1024) { // 10MB limit
+            alert('❌ Dosya çok büyük (max 10MB)');
+            document.body.removeChild(input);
             resolve(false);
             return;
           }
@@ -240,6 +261,14 @@ export const useWebStorage = () => {
             try {
               const importedData = JSON.parse(event.target?.result as string);
               
+              // Veri formatı kontrolü
+              if (!importedData || typeof importedData !== 'object') {
+                alert('❌ Geçersiz JSON formatı');
+                document.body.removeChild(input);
+                resolve(false);
+                return;
+              }
+
               // Mevcut verileri yedekle
               const backup: { [key: string]: string | null } = {};
               const keys = Object.keys(localStorage);
@@ -249,37 +278,67 @@ export const useWebStorage = () => {
                 }
               });
               
-              // Yeni verileri yükle
-              Object.keys(importedData).forEach(key => {
-                const value = importedData[key];
-                const storageKey = `pds_${key}`;
+              try {
+                // Yeni verileri yükle
+                let importedCount = 0;
+                Object.keys(importedData).forEach(key => {
+                  if (key === '_metadata') return; // Metadata'yı atla
+                  
+                  const value = importedData[key];
+                  const storageKey = `pds_${key}`;
+                  
+                  if (typeof value === 'object') {
+                    localStorage.setItem(storageKey, JSON.stringify(value));
+                  } else {
+                    localStorage.setItem(storageKey, value);
+                  }
+                  importedCount++;
+                });
                 
-                if (typeof value === 'object') {
-                  localStorage.setItem(storageKey, JSON.stringify(value));
-                } else {
-                  localStorage.setItem(storageKey, value);
-                }
-              });
+                console.log(`📥 [WEB] ${importedCount} modül verisi içe aktarıldı`);
+              } catch (storageError) {
+                // Hata durumunda backup'ı geri yükle
+                Object.keys(backup).forEach(key => {
+                  if (backup[key] !== null) {
+                    localStorage.setItem(key, backup[key]!);
+                  }
+                });
+                throw storageError;
+              }
               
-              console.log('📥 [WEB] Veri içe aktarımı tamamlandı');
+              document.body.removeChild(input);
+              console.log('📥 [WEB] Veri içe aktarımı başarıyla tamamlandı');
               resolve(true);
             } catch (error) {
               console.error('❌ [WEB] İçe aktarım parse hatası:', error);
+              alert('❌ İçe aktarım hatası:\n' + error.message);
+              document.body.removeChild(input);
               resolve(false);
             }
           };
           
           reader.onerror = () => {
             console.error('❌ [WEB] Dosya okuma hatası');
+            alert('❌ Dosya okunamadı');
+            document.body.removeChild(input);
             resolve(false);
           };
           
           reader.readAsText(file);
         };
         
+        // İptal durumu için timeout
+        setTimeout(() => {
+          if (document.body.contains(input)) {
+            document.body.removeChild(input);
+            resolve(false);
+          }
+        }, 30000); // 30 saniye timeout
+        
         input.click();
       } catch (error) {
         console.error('❌ [WEB] İçe aktarım hatası:', error);
+        alert('❌ İçe aktarım başlatılamadı:\n' + error.message);
         resolve(false);
       }
     });
