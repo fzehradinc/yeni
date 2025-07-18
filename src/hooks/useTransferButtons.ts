@@ -68,24 +68,20 @@ export const useTransferButtons = () => {
 
   // Dışa aktarım fonksiyonu - DÜZELTİLDİ
   const handleExport = async () => {
-    if (!storage.isElectron) {
-      alert('⚠️ Dışa aktarım özelliği sadece Electron sürümünde kullanılabilir.');
-      return;
-    }
 
     setLoading(true);
     
     try {
       console.log('📦 Dışa aktarım başlatılıyor...');
       
-      // Electron'a dışa aktarım komutu gönder
-      const success = await window.electronAPI.exportData();
+      // Web storage'dan dışa aktarım
+      const success = await storage.exportData();
       
       if (success) {
-        alert('✅ Veriler başarıyla dışa aktarıldı!\n\n📁 Dosya masaüstünüze kaydedildi.\n📦 Dosya adı: personel_destek_yedek_YYYYMMDD_HHmmss.zip');
+        alert('✅ Veriler başarıyla dışa aktarıldı!\n\n📁 JSON dosyası indirildi.\n📦 Tüm modül verileri dahil edildi.');
         console.log('📦 Dışa aktarım tamamlandı');
       } else {
-        alert('❌ Dışa aktarım işlemi başarısız oldu.\n\nOlası nedenler:\n• Veri klasörü bulunamadı\n• Masaüstüne yazma izni yok\n• Disk alanı yetersiz');
+        alert('❌ Dışa aktarım işlemi başarısız oldu.\n\nOlası nedenler:\n• Tarayıcı indirme engellendi\n• Veri bulunamadı');
       }
     } catch (error) {
       console.error('❌ Dışa aktarım hatası:', error);
@@ -97,10 +93,6 @@ export const useTransferButtons = () => {
 
   // İçe aktarım fonksiyonu - DÜZELTİLDİ
   const handleImport = async () => {
-    if (!storage.isElectron) {
-      alert('⚠️ İçe aktarım özelliği sadece Electron sürümünde kullanılabilir.');
-      return;
-    }
 
     const confirmMessage = `⚠️ İçe aktarım işlemi hakkında önemli bilgiler:
 
@@ -111,11 +103,11 @@ export const useTransferButtons = () => {
 • Bu işlem geri alınamaz
 
 💾 Güvenlik:
-• Mevcut verileriniz otomatik olarak yedeklenecektir
-• Hata durumunda otomatik geri yükleme yapılacaktır
+• Web ortamında veriler localStorage'da saklanır
+• Sayfa yenilendiğinde veriler korunur
 
-📁 Dosya seçimi:
-• Sadece .zip uzantılı yedek dosyaları kabul edilir
+📁 Dosya seçimi: 
+• Sadece .json uzantılı yedek dosyaları kabul edilir
 • Dosya seçim penceresi açılacaktır
 
 Devam etmek istediğinizden emin misiniz?`;
@@ -129,8 +121,8 @@ Devam etmek istediğinizden emin misiniz?`;
     try {
       console.log('📥 İçe aktarım başlatılıyor...');
       
-      // Electron'a içe aktarım komutu gönder
-      const success = await window.electronAPI.importData();
+      // Web storage'a içe aktarım
+      const success = await storage.importData();
       
       if (success) {
         alert('✅ Veriler başarıyla içe aktarıldı!\n\n🔄 Değişikliklerin görünmesi için sayfa yeniden yüklenecek.\n\n⏱️ Lütfen bekleyin...');
@@ -141,7 +133,7 @@ Devam etmek istediğinizden emin misiniz?`;
           window.location.reload();
         }, 2000);
       } else {
-        alert('❌ İçe aktarım işlemi iptal edildi veya başarısız oldu.\n\nOlası nedenler:\n• Dosya seçimi iptal edildi\n• Geçersiz zip dosyası\n• Dosya okuma hatası\n• Yedekten geri yükleme yapıldı');
+        alert('❌ İçe aktarım işlemi iptal edildi veya başarısız oldu.\n\nOlası nedenler:\n• Dosya seçimi iptal edildi\n• Geçersiz JSON dosyası\n• Dosya okuma hatası');
       }
     } catch (error) {
       console.error('❌ İçe aktarım hatası:', error);
@@ -197,25 +189,4 @@ Devam etmek istiyor musunuz?`;
   };
 };
 
-// Global tip tanımları için ekleme
-declare global {
-  interface Window {
-    electronAPI: {
-      readJsonFile: (filename: string) => Promise<any>;
-      writeJsonFile: (filename: string, data: any) => Promise<boolean>;
-      updateYayinDurumu: (moduleName: string, isPublished: boolean) => Promise<boolean>;
-      saveFile: (filename: string, data: string, encoding?: string) => Promise<boolean>;
-      readFile: (filename: string, encoding?: string) => Promise<string | null>;
-      fileExists: (filename: string) => Promise<boolean>;
-      getAppInfo: () => Promise<{
-        version: string;
-        name: string;
-        dataPath: string;
-        isDev: boolean;
-      }>;
-      exportData: () => Promise<boolean>; // YENİ
-      importData: () => Promise<boolean>; // YENİ
-      log: (message: string) => void;
-    };
-  }
-}
+// Electron tip tanımları kaldırıldı

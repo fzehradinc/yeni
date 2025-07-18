@@ -204,7 +204,7 @@ function App() {
                     flex items-center gap-2 text-xs shadow-sm hover:shadow-md
                     ${sidebarCollapsed ? 'justify-center' : 'justify-start'}
                   `}
-                  title={sidebarCollapsed ? 'Dışa Aktar' : 'Tüm verileri .zip dosyası olarak masaüstüne dışa aktar'}
+                  title={sidebarCollapsed ? 'Dışa Aktar' : 'Tüm verileri JSON dosyası olarak indir'}
                 >
                   {loading ? (
                     <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
@@ -224,7 +224,7 @@ function App() {
                     flex items-center gap-2 text-xs shadow-sm hover:shadow-md
                     ${sidebarCollapsed ? 'justify-center' : 'justify-start'}
                   `}
-                  title={sidebarCollapsed ? 'İçe Aktar' : 'Yedek .zip dosyasından verileri geri yükle'}
+                  title={sidebarCollapsed ? 'İçe Aktar' : 'JSON yedek dosyasından verileri geri yükle'}
                 >
                   {loading ? (
                     <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>

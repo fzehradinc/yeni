@@ -54,13 +54,8 @@ export const useDeveloperTools = () => {
       console.log('✅ Transfer butonları geri getirildi');
       
       // Başarı mesajı - Electron uyumlu alert
-      if (storage.isElectron) {
-        // Electron'da native dialog kullan
-        alert('🔧 Geliştirici Araçları\n\n✅ Tüm yayın durumları başarıyla temizlendi!\n✅ Transfer butonları geri getirildi!\n\n🔄 Sayfa yeniden yükleniyor...');
-      } else {
-        // Web'de normal alert
-        alert('🔧 Geliştirici Araçları\n\n✅ Tüm yayın durumları başarıyla temizlendi!\n✅ Transfer butonları geri getirildi!\n\n🔄 Sayfa yeniden yükleniyor...');
-      }
+      // Web ortamında alert
+      alert('🔧 Geliştirici Araçları\n\n✅ Tüm yayın durumları başarıyla temizlendi!\n✅ Transfer butonları geri getirildi!\n\n🔄 Sayfa yeniden yükleniyor...');
       
       // Sayfayı yenile
       setTimeout(() => {
